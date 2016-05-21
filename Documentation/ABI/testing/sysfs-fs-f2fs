@@ -64,7 +64,6 @@ Description:
 		 Controls the dirty page count condition for batched sequential
 		 writes in ->writepages.
 
-
 What:		/sys/fs/f2fs/<disk>/min_hot_blocks
 Date:		March 2017
 Contact:	"Jaegeuk Kim" <jaegeuk@kernel.org>
