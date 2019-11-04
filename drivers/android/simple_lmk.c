@@ -87,19 +87,7 @@ static bool vtsk_is_duplicate(int vlen, struct task_struct *vtsk)
 	return false;
 }
 
-static unsigned long get_total_mm_pages(struct mm_struct *mm)
-{
-	unsigned long pages = 0;
-	int i;
-
-	for (i = 0; i < NR_MM_COUNTERS; i++)
-		pages += get_mm_counter(mm, i);
-
-	return pages;
-}
-
-static unsigned long find_victims(int *vindex, unsigned short target_adj_min,
-				  unsigned short target_adj_max)
+static unsigned long find_victims(int *vindex, short target_adj)
 {
 	unsigned long pages_found = 0;
 	int old_vindex = *vindex;
@@ -131,7 +119,7 @@ static unsigned long find_victims(int *vindex, unsigned short target_adj_min,
 		victims[*vindex].size = get_mm_rss(vtsk->mm);
 
 		/* Keep track of the number of pages that have been found */
-		pages_found += varr[*vindex].size;
+		pages_found += victims[*vindex].size;
 
 		/* Make sure there's space left in the victim array */
 		if (++*vindex == MAX_VICTIMS)
@@ -185,6 +173,16 @@ static void scan_and_kill(unsigned long pages_needed)
 	for (i = 1; i < ARRAY_SIZE(adjs); i++) {
 		pages_found += find_victims(&nr_found, adjs[i], adjs[i - 1]);
 		if (pages_found >= pages_needed || nr_found == MAX_VICTIMS)
+
+	/*
+	 * Hold the tasklist lock so tasks don't disappear while scanning. This
+	 * is preferred to holding an RCU read lock so that the list of tasks
+	 * is guaranteed to be up to date.
+	 */
+	read_lock(&tasklist_lock);
+	for (i = 0; i < ARRAY_SIZE(adj_prio); i++) {
+		pages_found += find_victims(&nr_victims, adj_prio[i]);
+		if (pages_found >= pages_needed || nr_victims == MAX_VICTIMS)
 			break;
 	}
 	rcu_read_unlock();
@@ -195,7 +193,7 @@ static void scan_and_kill(unsigned long pages_needed)
 		return;
 
 	/* First round of victim processing to weed out unneeded victims */
-	nr_to_kill = process_victims(nr_found, pages_needed);
+	nr_to_kill = process_victims(nr_victims, pages_needed);
 
 	/*
 	 * Try to kill as few of the chosen victims as possible by sorting the
@@ -206,11 +204,6 @@ static void scan_and_kill(unsigned long pages_needed)
 
 	/* Second round of victim processing to finally select the victims */
 	nr_to_kill = process_victims(nr_to_kill, pages_needed);
-
-	/* Store the final number of victims for simple_lmk_mm_freed() */
-	write_lock(&mm_free_lock);
-	nr_victims = nr_to_kill;
-	write_unlock(&mm_free_lock);
 
 	/* Kill the victims */
 	atomic_set_release(&victims_to_kill, nr_to_kill);
@@ -311,12 +304,11 @@ static int simple_lmk_init_set(const char *val, const struct kernel_param *kp)
 	static atomic_t init_done = ATOMIC_INIT(0);
 	struct task_struct *thread;
 
-	if (atomic_cmpxchg(&init_done, 0, 1))
-		return 0;
-
-	thread = kthread_run(simple_lmk_reclaim_thread, NULL, "simple_lmkd");
-	BUG_ON(IS_ERR(thread));
-
+	if (!atomic_cmpxchg(&init_done, 0, 1)) {
+		thread = kthread_run(simple_lmk_reclaim_thread, NULL,
+				     "simple_lmkd");
+		BUG_ON(IS_ERR(thread));
+	}
 	return 0;
 }
 
