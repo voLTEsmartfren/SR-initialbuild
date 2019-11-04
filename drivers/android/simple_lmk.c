@@ -64,7 +64,7 @@ static const unsigned short adjs[] = {
 static struct victim_info victims[MAX_VICTIMS];
 static DECLARE_WAIT_QUEUE_HEAD(oom_waitq);
 static DECLARE_COMPLETION(reclaim_done);
-static int victims_to_kill;
+static atomic_t victims_to_kill = ATOMIC_INIT(0);
 static atomic_t needs_reclaim = ATOMIC_INIT(0);
 
 static int victim_size_cmp(const void *lhs_ptr, const void *rhs_ptr)
@@ -213,6 +213,7 @@ static void scan_and_kill(unsigned long pages_needed)
 	write_unlock(&mm_free_lock);
 
 	/* Kill the victims */
+	atomic_set_release(&victims_to_kill, nr_to_kill);
 	for (i = 0; i < nr_to_kill; i++) {
                 static const struct sched_param sched_zero_prio;
 		struct victim_info *victim = &victims[i];
