@@ -84,7 +84,8 @@ static unsigned long get_total_mm_pages(struct mm_struct *mm)
 	return pages;
 }
 
-static unsigned long find_victims(int *vindex, short target_adj)
+static unsigned long find_victims(int *vindex, short target_adj_min,
+				  short target_adj_max)
 {
 	unsigned long pages_found = 0;
 	int old_vindex = *vindex;
@@ -93,6 +94,7 @@ static unsigned long find_victims(int *vindex, short target_adj)
 	for_each_process(tsk) {
 		struct signal_struct *sig;
 		struct task_struct *vtsk;
+		short adj;
 
 		/*
 		 * Search for suitable tasks with the targeted importance (adj).
@@ -104,7 +106,8 @@ static unsigned long find_victims(int *vindex, short target_adj)
 		 * trying to lock a task that we locked earlier.
 		 */
 		sig = tsk->signal;
-		if (READ_ONCE(sig->oom_score_adj) != target_adj ||
+		adj = READ_ONCE(sig->oom_score_adj);
+		if (adj < target_adj_min || adj > target_adj_max - 1 ||
 		    sig->flags & (SIGNAL_GROUP_EXIT | SIGNAL_GROUP_COREDUMP) ||
 		    (thread_group_empty(tsk) && tsk->flags & PF_EXITING) ||
 		    vtsk_is_duplicate(*vindex, tsk))
@@ -180,8 +183,8 @@ static void scan_and_kill(unsigned long pages_needed)
 	 * is guaranteed to be up to date.
 	 */
 	read_lock(&tasklist_lock);
-	for (i = 0; i < ARRAY_SIZE(adj_prio); i++) {
-		pages_found += find_victims(&nr_victims, adj_prio[i]);
+	for (i = 1; i < ARRAY_SIZE(adjs); i++) {
+		pages_found += find_victims(&nr_victims, adjs[i], adjs[i - 1]);
 		if (pages_found >= pages_needed || nr_victims == MAX_VICTIMS)
 			break;
 	}
