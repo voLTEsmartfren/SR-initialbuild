@@ -3182,6 +3182,9 @@ retry:
 	if (gfp_mask & __GFP_KSWAPD_RECLAIM)
 		wake_all_kswapds(order, ac);
 
+	/* Boost DDR bus when memory is low so allocation latency doesn't get too bad */
+	devfreq_boost_kick(DEVFREQ_MSM_CPUBW);
+
 	/*
 	 * OK, we're below the kswapd watermark and have kicked background
 	 * reclaim. Now things get more complex, so set up alloc_flags according
