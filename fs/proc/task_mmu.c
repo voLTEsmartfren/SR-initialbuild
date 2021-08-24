@@ -388,9 +388,6 @@ show_map_vma(struct seq_file *m, struct vm_area_struct *vma, int is_pid)
 			}
 		}
 
-		/* Set the overflow status to get more memory */
-		seq_commit(m, -1);
-		return;
 		seq_pad(m, ' ');
 		seq_file_path(m, file, "\n");
 		goto done;
