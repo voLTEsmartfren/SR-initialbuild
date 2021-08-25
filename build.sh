@@ -1,8 +1,8 @@
 #!/bin/bash
 
-export KERNELNAME=Super
+export KERNELNAME=SaranRom
 
-export LOCALVERSION=-SuperRyzen-V2
+export LOCALVERSION=-SRK-New-Generation-V2
 
 export KBUILD_BUILD_USER=WhysDevs
 
