@@ -13,14 +13,15 @@ make_build(){
 				ARCH=arm64 \
 				AR=llvm-ar \
 				NM=llvm-nm \
+				LD=ld.lld \
 				OBJCOPY=llvm-objcopy \
 				OBJDUMP=llvm-objdump \
 				STRIP=llvm-strip \
 				CROSS_COMPILE=aarch64-linux-gnu- \
 				CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 	else
-		export CROSS_COMPILE=$(pwd)/gcc64/bin/aarch64-elf-
-		export CROSS_COMPILE_ARM32=$(pwd)/gcc32/bin/arm-eabi-
+		export CROSS_COMPILE=$(pwd)/gcc64/bin/aarch64-linux-gnu-
+		export CROSS_COMPILE_ARM32=$(pwd)/gcc32/bin/arm-linux-gnueabi-
 		make O=out ARCH=arm64 $1
 		make -j$(nproc --all) O=out ARCH=arm64
 	fi
@@ -81,8 +82,8 @@ gen_toolchain(){
 	then
 		git clone --depth=1 https://github.com/kdrag0n/proton-clang clang
 	else
-		git clone --depth=1 https://github.com/silont-project/aarch64-elf-gcc -b arm64/10 gcc64
-		git clone --depth=1 https://github.com/silont-project/arm-eabi-gcc -b arm/10 gcc32
+		git clone --depth=1 https://github.com/WhysDev/aarch64-gcc -b master gcc64
+		git clone --depth=1 https://github.com/WhysDev/arm-gcc -b master gcc32
 	fi
 	git clone --depth=1 https://github.com/WhysDev/AnyKernel3-2 -b master anykernel
 }
