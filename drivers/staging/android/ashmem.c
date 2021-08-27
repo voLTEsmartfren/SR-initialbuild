@@ -100,27 +100,44 @@ static DEFINE_MUTEX(ashmem_mutex);
 static struct kmem_cache *ashmem_area_cachep __read_mostly;
 static struct kmem_cache *ashmem_range_cachep __read_mostly;
 
-#define range_size(range) \
-	((range)->pgend - (range)->pgstart + 1)
+static inline unsigned long range_size(struct ashmem_range *range)
+{
+	return range->pgend - range->pgstart + 1;
+}
 
-#define range_on_lru(range) \
-	((range)->purged == ASHMEM_NOT_PURGED)
+static inline bool range_on_lru(struct ashmem_range *range)
+{
+	return range->purged == ASHMEM_NOT_PURGED;
+}
 
-#define page_range_subsumes_range(range, start, end) \
-	(((range)->pgstart >= (start)) && ((range)->pgend <= (end)))
+static inline bool page_range_subsumes_range(struct ashmem_range *range,
+					     size_t start, size_t end)
+{
+	return (range->pgstart >= start) && (range->pgend <= end);
+}
 
-#define page_range_subsumed_by_range(range, start, end) \
-	(((range)->pgstart <= (start)) && ((range)->pgend >= (end)))
+static inline bool page_range_subsumed_by_range(struct ashmem_range *range,
+						size_t start, size_t end)
+{
+	return (range->pgstart <= start) && (range->pgend >= end);
+}
 
-#define page_in_range(range, page) \
-	(((range)->pgstart <= (page)) && ((range)->pgend >= (page)))
+static inline bool page_in_range(struct ashmem_range *range, size_t page)
+{
+	return (range->pgstart <= page) && (range->pgend >= page);
+}
 
-#define page_range_in_range(range, start, end) \
-	(page_in_range(range, start) || page_in_range(range, end) || \
-		page_range_subsumes_range(range, start, end))
+static inline bool page_range_in_range(struct ashmem_range *range,
+				       size_t start, size_t end)
+{
+	return page_in_range(range, start) || page_in_range(range, end) ||
+		page_range_subsumes_range(range, start, end);
+}
 
-#define range_before_page(range, page) \
-	((range)->pgend < (page))
+static inline bool range_before_page(struct ashmem_range *range, size_t page)
+{
+	return range->pgend < page;
+}
 
 #define PROT_MASK		(PROT_EXEC | PROT_READ | PROT_WRITE)
 
@@ -325,7 +342,7 @@ out_unlock:
 static loff_t ashmem_llseek(struct file *file, loff_t offset, int origin)
 {
 	struct ashmem_area *asma = file->private_data;
-	int ret;
+	loff_t ret;
 
 	mutex_lock(&ashmem_mutex);
 
@@ -689,8 +706,8 @@ restart:
 		if (page_range_subsumed_by_range(range, pgstart, pgend))
 			return 0;
 		if (page_range_in_range(range, pgstart, pgend)) {
-			pgstart = min_t(size_t, range->pgstart, pgstart);
-			pgend = max_t(size_t, range->pgend, pgend);
+			pgstart = min(range->pgstart, pgstart);
+			pgend = max(range->pgend, pgend);
 			purged |= range->purged;
 			range_del(range);
 			goto restart;
@@ -862,14 +879,14 @@ static struct miscdevice ashmem_misc = {
 
 static int __init ashmem_init(void)
 {
-	int ret;
+	int ret = -ENOMEM;
 
 	ashmem_area_cachep = kmem_cache_create("ashmem_area_cache",
 					       sizeof(struct ashmem_area),
 					       0, 0, NULL);
 	if (unlikely(!ashmem_area_cachep)) {
 		pr_err("failed to create slab cache\n");
-		return -ENOMEM;
+		goto out;
 	}
 
 	ashmem_range_cachep = kmem_cache_create("ashmem_range_cache",
@@ -877,19 +894,32 @@ static int __init ashmem_init(void)
 						0, 0, NULL);
 	if (unlikely(!ashmem_range_cachep)) {
 		pr_err("failed to create slab cache\n");
-		return -ENOMEM;
+		goto out_free1;
 	}
 
 	ret = misc_register(&ashmem_misc);
 	if (unlikely(ret)) {
 		pr_err("failed to register misc device!\n");
-		return ret;
+		goto out_free2;
 	}
 
-	register_shrinker(&ashmem_shrinker);
+	ret = register_shrinker(&ashmem_shrinker);
+	if (ret) {
+		pr_err("failed to register shrinker!\n");
+		goto out_demisc;
+	}
 
 	pr_info("initialized\n");
 
 	return 0;
+
+out_demisc:
+	misc_deregister(&ashmem_misc);
+out_free2:
+	kmem_cache_destroy(ashmem_range_cachep);
+out_free1:
+	kmem_cache_destroy(ashmem_area_cachep);
+out:
+	return ret;
 }
 device_initcall(ashmem_init);

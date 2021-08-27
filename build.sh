@@ -1,14 +1,14 @@
 #!/bin/bash
 
-export KERNELNAME=Super
+export KERNELNAME=SaranRom
 
-export LOCALVERSION=-SuperRyzen-V2
+export LOCALVERSION=-SRK-New-Gen-V1
 
 export KBUILD_BUILD_USER=WhysDevs
 
 export KBUILD_BUILD_HOST=DroneCI
 
-export TOOLCHAIN=clang
+export TOOLCHAIN=gcc
 
 export DEVICES=whyred,tulip,lavender,a26x
 
