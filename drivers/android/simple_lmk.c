@@ -218,7 +218,7 @@ static void scan_and_kill(void)
 
 	/* Store the final number of victims for simple_lmk_mm_freed() */
 	write_lock(&mm_free_lock);
-	victims_to_kill = nr_to_kill;
+	nr_victims = nr_to_kill;
 	write_unlock(&mm_free_lock);
 
 	/* Kill the victims */
@@ -256,13 +256,8 @@ static void scan_and_kill(void)
 
 	/* Clean up for future reclaim invocations */
 	write_lock(&mm_free_lock);
-	if (!ret) {
-		/* Extra clean-up is needed when the timeout is hit */
-		reinit_completion(&reclaim_done);
-		for (i = 0; i < nr_to_kill; i++)
-			victims[i].mm = NULL;
-	}
-	victims_to_kill = 0;
+	reinit_completion(&reclaim_done);
+	nr_victims = 0;
 	nr_killed = (atomic_t)ATOMIC_INIT(0);
 	write_unlock(&mm_free_lock);
 }
