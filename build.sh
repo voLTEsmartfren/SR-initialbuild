@@ -2,7 +2,7 @@
 
 export KERNELNAME=SaranRom
 
-export LOCALVERSION=-New-Gen-V1-eas
+export LOCALVERSION=-New-Gen-V1-EOL
 
 export KBUILD_BUILD_USER=WhysDevs
 
