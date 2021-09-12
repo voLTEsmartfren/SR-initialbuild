@@ -1,8 +1,8 @@
 #!/bin/bash
 
-export KERNELNAME=SaranRom
+export KERNELNAME=SaranRomKak
 
-export LOCALVERSION=-New-Gen-V1-EOL
+export LOCALVERSION=V21-Petriks
 
 export KBUILD_BUILD_USER=WhysDevs
 
