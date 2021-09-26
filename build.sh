@@ -1,12 +1,12 @@
-#!/bin/bash
+:#!/bin/bash
 
-export KERNELNAME=SaranRom
+export KERNELNAME=SRK
 
-export LOCALVERSION=-SRK-New-Gen-V1
+export LOCALVERSION=-Petriks-V22
 
-export KBUILD_BUILD_USER=WhysDevs
+export KBUILD_BUILD_USER=WhysDev
 
-export KBUILD_BUILD_HOST=DroneCI
+export KBUILD_BUILD_HOST=NakanoMiku
 
 export TOOLCHAIN=gcc
 
@@ -16,7 +16,7 @@ source helper
 
 gen_toolchain
 
-send_msg "⏳ Start building ${KERNELNAME} ${LOCALVERSION} | DEVICES: whyred - tulip - lavender - wayne - jasmine"
+send_msg "⏰ Start building ${KERNELNAME} ${LOCALVERSION} | DEVICES: whyred - tulip - lavender - wayne - jasmine"
 
 START=$(date +"%s")
 
@@ -27,7 +27,7 @@ do
 	build ${i} -newcam
 done
 
-send_msg "⏳ Start building Overclock version | DEVICES: whyred - tulip"
+send_msg "⏰ Start building Overclock version | DEVICES: whyred - tulip"
 
 git apply oc.patch
 
@@ -47,4 +47,4 @@ END=$(date +"%s")
 
 DIFF=$(( END - START ))
 
-send_msg "✅ Build completed in $((DIFF / 60))m $((DIFF % 60))s | Linux version : $(make kernelversion) | Last commit: $(git log --pretty=format:'%s' -5)"
+send_msg "☑️ Build completed in $((DIFF / 60))m $((DIFF % 60))s | Linux version : $(make kernelversion) | Last commit: $(git log --pretty=format:'%s' -5)"

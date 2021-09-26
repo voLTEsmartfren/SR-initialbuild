@@ -13,7 +13,6 @@ make_build(){
 				ARCH=arm64 \
 				AR=llvm-ar \
 				NM=llvm-nm \
-				LD=ld.lld \
 				OBJCOPY=llvm-objcopy \
 				OBJDUMP=llvm-objdump \
 				STRIP=llvm-strip \
