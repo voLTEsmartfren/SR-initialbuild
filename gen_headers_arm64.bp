@@ -531,6 +531,10 @@ gen_headers_out_arm64 = [
     "linux/shm.h",
     "linux/signal.h",
     "linux/signalfd.h",
+<<<<<<< HEAD
+=======
+    "linux/slatecom_interface.h",
+>>>>>>> 6bf98b70459de801b1e46ad4ec7d32499219b995
     "linux/smcinvoke.h",
     "linux/smiapp.h",
     "linux/snmp.h",
