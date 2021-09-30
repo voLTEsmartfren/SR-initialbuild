@@ -1,12 +1,12 @@
 #!/bin/bash
 
-export KERNELNAME=Super
+export KERNELNAME=Dark-Elixir 
 
-export LOCALVERSION=-SuperRyzen-V2
+export LOCALVERSION=-Dark_Elixir_ryzen_SpecialEdition
 
 export KBUILD_BUILD_USER=WhysDevs
 
-export KBUILD_BUILD_HOST=DroneCI
+export KBUILD_BUILD_HOST=NakanoMiku
 
 export TOOLCHAIN=clang
 
